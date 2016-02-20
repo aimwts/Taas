@@ -11,7 +11,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     v.gui = true
     v.memory = 2048
   end
-  config.vm.box = "aimwts/test1"
+  config.vm.box = "https://atlas.hashicorp.com/aimwts/test1"
   config.vm.communicator = :winrm
   config.vm.guest = :windows
   config.vm.network :forwarded_port, host: 33389, guest: 3389, id: "rdp", auto_correct: true
