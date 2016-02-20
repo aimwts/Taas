@@ -15,4 +15,5 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.communicator = :winrm
   config.vm.guest = :windows
   config.vm.network :forwarded_port, host: 33389, guest: 3389, id: "rdp", auto_correct: true
+end
   
