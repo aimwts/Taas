@@ -1,0 +1,14 @@
+// Test Evolution  Rev 1.2    09/02/2014  JC
+// Use this file (in local folder) to get TEST_FUNCT functions to appear in Navigation Bar when using these macros.
+// Browser Parser will use these definitions for anything other than simple macros.
+// Note: Compiler will NOT use these definitions.
+// This doesn't work for VC 2010 Express when you place this file in C:\Program Files\Microsoft Visual Studio 10.0\VC\vcpackages\.
+#define MLOG_ForEachSite(site)
+MLOG_ForEachEnabledSite(siteIndex)
+#define MLOG_ForEachEnabledSite(void)
+#define MLOG_CheckFastBinning
+#define MLOG_DisableFailedSites
+MLog_CreateNewLot(char* lotId)
+MLog_OnStartDut(void)
+MLog_OnEndDut(void)
+MLog_GetBin(UINT siteNumber)

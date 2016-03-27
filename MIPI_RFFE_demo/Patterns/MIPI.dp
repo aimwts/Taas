@@ -1,0 +1,238 @@
+;/*******************************************************************************************
+;/  MIPI.dp
+;/  Rev Eng	Date		Description
+;/   1	JC	01/07/14	Initial Issue
+;/   2	JC	07/29/14	Capture_Data => CaptureData
+;********************************************************************************************
+.target DDP = { Mode:Single }
+
+.extern DUTmatch
+.extern DUTrise
+;.extern DUTrise2
+.extern RFFEWrite
+.extern RFFEWriteS
+.extern RFFEWriteSR
+
+#include "./CommonHeader_MIPI.h"
+
+; Define the pattern name here. Pattern name must be unique from all other loaded patterns.
+; Note pattern filename is *not* the pattern name.
+.pattern waveform_1
+            SCLK SDATA SCLK_A SDATA_A
+
+;/--------------------- 4 pins per site for patterns. ---------------------------------------------
+;                                     S
+;                                 S S D
+;                               S D C A
+;                               C A L T
+;                               L T K A
+; op-codes                      K A A A TimeSet  Extended op-codes
+;/--------------------------------------------------------------------------------------------------
+
+DUTmatch:
+; If rcode = 1 then DUT Match failed.
+; If rcode = 2 then DUT Match passed.
+  nop                           0 X X X T = TSET0 CLR_COND={C1} ; pipeline = 23
+  rcode 1                       0 X X X T = TSET0
+  nop                           0 X X X T = TSET0
+  nop                           0 X X X T = TSET0
+  nop                           0 X X X T = TSET0
+  nop                           1 H X X T = TSET0 SEQMode={MATCH} ; [1]    DUT match mode for this vector
+  rep 61                        0 H X X T = TSET0 SEQMode={MATCH} ; [2-62] fill pipeline
+  cjmp !DM Final                0 H X X T = TSET0 SEQMode={MATCH} ; cycle #62 jmp if DUT match
+  rcode 2                       0 X X X T = TSET0
+; cwait C1                      1 X X X T = TSET0 ; Repeat here until C1 flag is set by API.
+  Final:                        0 X X X T = TSET0
+  halt                          0 X X X T = TSET0
+
+DUTrise:
+; Wait for SDATA to go from L to H
+; If rcode = 1 then DUT Match failed and pattern loops forever.
+; If rcode = 2 then DUT Match passed.
+  nop                           0 X X X T = TSET0
+  rcode 1                       0 X X X T = TSET0
+  nop                           0 X X X T = TSET0
+  nop                           0 X X X T = TSET0
+  nop                           0 L X X T = TSET0
+  rep 62                        0 H X X T = TSET0 SEQMode={MATCH} ; [2-62] fill pipeline
+  cwait DM                      0 H X X T = TSET0 SEQMode={MATCH} ; cycle #62 repeat here until DUT match
+  rcode 2                       0 X X X T = TSET0
+  halt                          0 X X X T = TSET0
+
+
+DUTrise2:
+; Wait for SDATA to go from L to H for as many as 1000 vectors. (Requires DD48 Rev 11)
+; If rcode = 1 then DUT Match failed.
+; If rcode = 2 then DUT Match passed.
+; nop                           0 X X X T = TSET0
+; rcode 1                       0 X X X T = TSET0
+; nop                           0 X X X T = TSET0
+; nop                           0 X X X T = TSET0
+; crep DM 1000                  0 H X X T = TSET0 SEQMode={MATCH} ; repeat here up to 1000 until DUT match.
+; rcode 2                       0 X X X T = TSET0
+; halt                          0 X X X T = TSET0
+
+
+RFFEWrite:
+; MIPI RFFE Write: Hard coded data to write to DUT.
+  nop                           0 X X X T = TSET0 ;
+  nop                           0 X X X T = TSET0 ;
+  nop                           0 X X X T = TSET0 ;
+  nop                           0 0 X X T = TSET0 TRIGGER={TRIGA} ; SEQ trigger to DSTAR_A line
+  nop                           0 0 X X T = TSET0 TRIGGER={TRIGA} ; SEQ trigger to DSTAR_A line
+  nop                           0 0 X X T = TSET0 TRIGGER={TRIGA} ; SEQ trigger to DSTAR_A line
+  nop                           0 0 X X T = TSET0 TRIGGER={TRIGA} ; SEQ trigger to DSTAR_A line
+  nop                           0 0 X X T = TSET0 ;
+;/----Production Program 4 pins per site for patterns. ---------------------------------------------
+;                                     S
+;                                 S S D
+;                               S D C A
+;                               C A L T
+;                               L T K A
+; op-codes                      K A A A TimeSet  Extended op-codes
+;/--------------------------------------------------------------------------------------------------
+  nop                           0 0 X X T = TSET0 ; RF5129 START sequence (SSC)
+  nop                           0 1 X X T = TSET0 ;
+  nop                           0 0 X X T = TSET0 ;
+  nop                           1 1 X X T = TSET0 ; Slave ID       Command Frame
+  nop                           1 1 X X T = TSET0 ; Slave ID
+  nop                           1 1 X X T = TSET0 ; Slave ID
+  nop                           1 1 X X T = TSET0 ; Slave ID
+  nop                           1 0 X X T = TSET0 ; Write Command C7
+  nop                           1 1 X X T = TSET0 ; Write Command C6
+  nop                           1 0 X X T = TSET0 ; Write Command C5
+  nop                           1 0 X X T = TSET0 ; Address C4
+  nop                           1 1 X X T = TSET0 ; Address C3
+  nop                           1 0 X X T = TSET0 ; Address C2
+  nop                           1 0 X X T = TSET0 ; Address C1
+  nop                           1 0 X X T = TSET0 ; Address C0
+  nop                           1 1 X X T = TSET0 ; Parity Bit (to make odd sum CMD + Addr)
+  nop                           1 1 X X T = TSET0 ; D7
+  nop                           1 0 X X T = TSET0 ; D6
+  nop                           1 1 X X T = TSET0 ; D5
+  nop                           1 0 X X T = TSET0 ; D4
+  nop                           1 1 X X T = TSET0 ; D3
+  nop                           1 0 X X T = TSET0 ; D2
+  nop                           1 1 X X T = TSET0 ; D1
+  nop                           1 0 X X T = TSET0 ; D0
+  nop                           1 1 X X T = TSET0 ; Parity Bit (to make odd sum)
+  nop                           1 0 X X T = TSET1 ; Bus Park (Drive 0 then Tri-State at CLK falling)
+  nop                           0 X X X T = TSET0 ;
+; jmp RFFEWrite                 0 X X X T = TSET0 ;
+  halt                          0 X X X T = TSET0 ;
+
+
+; Write to DUT using SEND engine (uses 18 bit length, MSB first)
+RFFEWriteS:
+  nop                           0 X X X T = TSET0
+  lwseg send18Data              0 X X X T = TSET0 send18Type  = starti;
+  lwseg CaptureData             0 X X X T = TSET0 CaptureType = starti;
+  rep 27                        0 X X X T = TSET0 ; wait for engines to initialize
+  nop                           0 X X X T = TSET0 ;
+  nop                           0 X X X T = TSET0 ;
+; crep DM 65000                 0 X X X T = TSET0 SEQMode={MATCH};
+; nop                           0 X X X T = TSET0 CLR_COND = AF
+; cjmp !AF label_jump_1         0 X X X T = TSET0
+; nop                           0 X X X T = TSET0 SET_COND = C2
+  nop                           0 0 X X T = TSET0 TRIGGER={TRIGA} ; SEQ trigger to DSTAR_A line
+  nop                           0 0 X X T = TSET0 TRIGGER={TRIGA} ; SEQ trigger to DSTAR_A line
+  nop                           0 0 X X T = TSET0 TRIGGER={TRIGA} ; SEQ trigger to DSTAR_A line
+  nop                           0 0 X X T = TSET0 TRIGGER={TRIGA} ; SEQ trigger to DSTAR_A line
+  nop                           0 0 X X T = TSET0 ;
+;/----Production Program 4 pins per site for patterns. ---------------------------------------------
+;                                     S
+;                                 S S D
+;                               S D C A
+;                               C A L T
+;                               L T K A
+; op-codes                      K A A A TimeSet  Extended op-codes
+;/--------------------------------------------------------------------------------------------------
+  nop                           0 0 X X T = TSET0 ; RF5129 START sequence (SSC)
+  nop                           0 1 X X T = TSET0 ;
+  nop                           0 0 X X T = TSET0 ;
+  nop                           1 1 X X T = TSET0 ; Slave ID       Command Frame
+  nop                           1 1 X X T = TSET0 ; Slave ID
+  nop                           1 1 X X T = TSET0 ; Slave ID
+  nop                           1 1 X X T = TSET0 ; Slave ID
+  nop                           1 W X X T = TSET0 send18Type = send  ; SEND memory to DUT; Write Command C7
+  nop                           1 W X X T = TSET0 send18Type = shift ; SEND memory to DUT; Write Command C6
+  nop                           1 W X X T = TSET0 send18Type = shift ; SEND memory to DUT; Write Command C5
+  nop                           1 W X X T = TSET0 send18Type = shift ; SEND memory to DUT; Address C4
+  nop                           1 W X X T = TSET0 send18Type = shift ; SEND memory to DUT; Address C3
+  nop                           1 W X X T = TSET0 send18Type = shift ; SEND memory to DUT; Address C2
+  nop                           1 W X X T = TSET0 send18Type = shift ; SEND memory to DUT; Address C1
+  nop                           1 W X X T = TSET0 send18Type = shift ; SEND memory to DUT; Address C0
+  nop                           1 W X X T = TSET0 send18Type = shift ; SEND memory to DUT; Parity Bit (to make odd sum CMD + Addr)
+  nop                           1 W X X T = TSET0 send18Type = shift ; SEND memory to DUT; D7
+  nop                           1 W X X T = TSET0 send18Type = shift ; SEND memory to DUT; D6
+  nop                           1 W X X T = TSET0 send18Type = shift ; SEND memory to DUT; D5
+  nop                           1 W X X T = TSET0 send18Type = shift ; SEND memory to DUT; D4
+  nop                           1 W X X T = TSET0 send18Type = shift ; SEND memory to DUT; D3
+  nop                           1 W X X T = TSET0 send18Type = shift ; SEND memory to DUT; D2
+  nop                           1 W X X T = TSET0 send18Type = shift ; SEND memory to DUT; D1
+  nop                           1 W X X T = TSET0 send18Type = shift ; SEND memory to DUT; D0
+  nop                           1 W X X T = TSET0 send18Type = shift ; SEND memory to DUT; Parity Bit (to make odd sum)
+  nop                           1 0 X X T = TSET1 ; Bus Park (Drive 0 then Tri-State at CLK falling)
+  nop                           0 X X X T = TSET0 ;
+  halt                          0 X X X T = TSET0 ;
+
+
+
+; MIPI RFFE Read
+; Write to DUT using SEND engine (uses 9 bit length, MSB first)
+; Read from DUT using RECEIVE engine (uses 9 bit length, MSB first)
+RFFEWriteSR:
+  nop                           0 X X X T = TSET0
+  lwseg send9Data               0 X X X T = TSET0 send9Type   = starti
+  lwseg CaptureData             0 X X X T = TSET0 CaptureType = starti
+  rep 27                        0 X X X T = TSET0 ; wait for engines to initialize
+  nop                           0 X X X T = TSET0 ;
+  nop                           0 X X X T = TSET0 ;
+; crep DM 65000                 0 X X X T = TSET0 SEQMode={MATCH};
+; nop                           0 X X X T = TSET0 CLR_COND = AF
+; cjmp !AF label_jump_1         0 X X X T = TSET0
+; nop                           0 X X X T = TSET0 SET_COND = C2
+  nop                           0 0 X X T = TSET0 TRIGGER={TRIGA} ; SEQ trigger to DSTAR_A line
+  nop                           0 0 X X T = TSET0 TRIGGER={TRIGA} ; SEQ trigger to DSTAR_A line
+  nop                           0 0 X X T = TSET0 TRIGGER={TRIGA} ; SEQ trigger to DSTAR_A line
+  nop                           0 0 X X T = TSET0 TRIGGER={TRIGA} ; SEQ trigger to DSTAR_A line
+  nop                           0 0 X X T = TSET0 ;
+;/----Production Program 4 pins per site for patterns. ---------------------------------------------
+;                                     S
+;                                 S S D
+;                               S D C A
+;                               C A L T
+;                               L T K A
+; op-codes                      K A A A TimeSet  Extended op-codes
+;/--------------------------------------------------------------------------------------------------
+  nop                           0 0 X X T = TSET0 ; RF5129 START sequence (SSC)
+  nop                           0 1 X X T = TSET0 ;
+  nop                           0 0 X X T = TSET0 ;
+  nop                           1 1 X X T = TSET0 ; Slave ID       Command Frame
+  nop                           1 1 X X T = TSET0 ; Slave ID
+  nop                           1 1 X X T = TSET0 ; Slave ID
+  nop                           1 1 X X T = TSET0 ; Slave ID
+  nop                           1 W X X T = TSET0 send9Type = send  ; SEND memory to DUT; Read Command C7
+  nop                           1 W X X T = TSET0 send9Type = shift ; SEND memory to DUT; Read Command C6
+  nop                           1 W X X T = TSET0 send9Type = shift ; SEND memory to DUT; Read Command C5
+  nop                           1 W X X T = TSET0 send9Type = shift ; SEND memory to DUT; Address C4
+  nop                           1 W X X T = TSET0 send9Type = shift ; SEND memory to DUT; Address C3
+  nop                           1 W X X T = TSET0 send9Type = shift ; SEND memory to DUT; Address C2
+  nop                           1 W X X T = TSET0 send9Type = shift ; SEND memory to DUT; Address C1
+  nop                           1 W X X T = TSET0 send9Type = shift ; SEND memory to DUT; Address C0
+  nop                           1 W X X T = TSET0 send9Type = shift ; SEND memory to DUT; Parity Bit (to make odd sum CMD + Addr)
+  nop                           1 0 X X T = TSET1 ; Bus Park (Drive 0 then Tri-State at CLK falling)
+  nop                           1 V X X T = TSET0 CaptureType = shift; D7
+  nop                           1 V X X T = TSET0 CaptureType = shift; D6
+  nop                           1 V X X T = TSET0 CaptureType = shift; D5
+  nop                           1 V X X T = TSET0 CaptureType = shift; D4
+  nop                           1 V X X T = TSET0 CaptureType = shift; D3
+  nop                           1 V X X T = TSET0 CaptureType = shift; D2
+  nop                           1 V X X T = TSET0 CaptureType = shift; D1
+  nop                           1 V X X T = TSET0 CaptureType = shift; D0  ; Store 8 bit word
+  nop                           1 V X X T = TSET0 CaptureType = shiftst; SEND memory to DUT; Parity Bit (to make odd sum)
+  nop                           1 0 X X T = TSET1 ; Bus Park (Drive 0 then Tri-State at CLK falling)
+  nop                           0 X X X T = TSET0 ;
+  halt                          0 X X X T = TSET0 ;
+
+

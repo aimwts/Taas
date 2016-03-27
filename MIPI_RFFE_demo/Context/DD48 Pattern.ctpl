@@ -1,0 +1,128 @@
+[include | header file to include]
+#include ../CommonHeader/|.h
+
+[comment | comment]
+; |
+
+
+[edgesetComments | comments for QMM & DMM modes]
+; Edges - can be changed run-time
+;QMM--------------------------------; DMM---------------------------------------
+;D0 (Driver on/enabled)             ; Driver ON and Drive Data 1st half of Period
+;D1 (drive w/tg1)                   ; Drive Return-To Format   1st half of Period
+;D2 (return to)                     ; Driver ON and Drive Data 2st half of Period
+;D3 (not used)                      ; Drive Return-To Format   2st half of Period
+;
+;C0 (tri-state driver)              ; Open Compare Window or Driver OFF 1st half of Period
+;C1 (no action/ignored)             ; Close Compare Window or Compare   1st half of Period
+;C2 (Window open mode)              ; Open Compare Window or Driver OFF 2st half of Period
+;C3 (Window close/Strobe mode)      ; Close Compare Window or Compare   2st half of Period
+
+[edgesetDMM | LVDS_P_DMM for DMM mode]
+.edgeset LVDS_P_DMM|		=	{ DF1:NRZ,    DF1_D0:0ns,  DF1_D1:10ns, \
+                              DF2:NRZ,    DF2_D0:10ns, DF2_D1:20ns, \
+                              CF1:Strobe, CF1_R0:0ns,  CF1_R1:8ns,  \
+                              CF2:Strobe, CF2_R0:0ns,  CF2_R1:18ns }
+.edgeset LVDS_N_DMM		=	{ DF1:NRZC,   DF1_D0:0ns,  DF1_D1:10ns, \
+                              DF2:NRZC,   DF2_D0:10ns, DF2_D1:20ns, \
+                              CF1:Strobe, CF1_R0:0ns,  CF1_R1:8ns,  \
+                              CF2:Strobe, CF2_R0:0ns,  CF2_R1:18ns }
+
+[edgesetQMM | EdgesetData1 w/ comments for QMM mode]
+.edgeset EsetData1|={DriveFormat:NRZ, ; TevDD_EdgeSetModify ()
+D0:0s,      ; D0 (Driver on/enabled)
+D1:1.0E-9s, ; D1 (drive w/tg1)
+D2:4.9E-6s, ; D2 (return to)
+D3:4.9E-6s, ; D3 (not used)
+;
+CompareFormat:Strobe, ; TevDD_EdgeSetModify ()
+R0:0s,      ; R0 (tri-state driver)
+R1:0s,      ; R1 (no action/ignored)
+R2:1.0E-6s, ; R2 (Window open mode)
+R3:2.0E-6s} ; R3 (Window close/Strobe mode)
+;
+
+
+[extern | label to export]
+.extern |
+
+[levelset | LevelSet1={ Vih: 0.5V,Vil: 0.0...]
+.levelset LevelSet1|={ Vih: 0.5V, Vil: 0.2V, Voh: -0.2V, Vol: -1V, Vt: 0.5V, Vc: -2V, Vch: 2V, Vcl: -2V, Ioh: 0.003A, Iol: 0.001A }
+
+[pattern | <name> \ <pins>]
+.pattern |
+pin1 pin2 pin3
+
+[pin_Disabled | SPARE_1]
+.pin SPARE_1|={
+MarkerMode:Quad,
+FailMask: enabled,
+ClockEdges: Disable,
+}
+
+[pin_Enabled | QMM ]
+.pin XPX_IN| =  { T1: normal,   DriverMode:Off,  LevelSet: LevelSet1, MarkerMode:Quad, ClockEdges: Enable, RelayMode: DUT, FailMask: disabled }
+
+
+[pingroup | ALL_DPINS]
+.pingroup ALL_DPINS|=
+{PinList: XPX_IN DDCh2 DDCh3, MarkerMode:Quad }
+
+[pset | PSET_01={ T0: 30E-9s, C0: 1}]
+.pset PSET_01|={ T0: 30E-9s, C0: 1}
+
+[targetDWn | DDP= {Mode: Dual, Warn:Normal}]
+.target DDP= {Mode: Dual, Warn:Normal}
+|
+
+[targetSingle | Normal 1 vector per opcode]
+.target DDP= {Mode: Single, Warn:Normal}
+|
+
+[tset | T1={ Pset: PSET_01}]
+.tset T1|={ Pset: PSET_01}
+
+[TRIGGER_A | (A,B,C) extended op-code for this vector]
+TRIGGER={TRIGA|}
+
+[TRIGGER_ABC | (A,B,C) extended op-code for this vector]
+TRIGGER={TRIGA,TRIGB,TRIGC|}
+
+[SEQModeMask | MASK Failures extended op-code]
+SEQMode={MASK|}
+
+[SEQModeMatch | MATCH DUT sample(s) extended op-code]
+SEQMode={MATCH|}
+
+[FLAGSall | SEQuencer Flags C1,C2,!C1,!C2,XCOND,!XCOND extended op-code]
+SEQMode={C1,C2,!C1,!C2,XCOND,!XCOND|}
+
+[SET_COND | SEQuencer Flags C1,C2,AF,PF extended op-code]
+SET_COND={C1,C2,AF,PF|}
+
+[CLR_COND | SEQuencer Flags C1,C2,AF,PF extended op-code]
+CLR_COND={C1,C2,AF,XCOND|}
+
+[rep | <num> opcode]
+rep |
+
+[halt | opcode]
+halt
+
+[RECEIVE_Waveform | ; RECEIVE Waveform setup]
+; RECEIVE Waveform setup
+.pingroup Rcv_P|   = { PinList: D9P D10P D11P D12P D13P D14P D15P D16P D17P D18P }  ; LVDS receivers (DDR)
+.wavetype CaptureType = { Type:  Receive, Mode: Parallel, Length: 4096, Width: 10, PinGroup: Rcv_P}
+.wavedata CaptureData = { WaveType: CaptureType}
+; lwseg CaptureData  xxxxxxxx   CaptureType = starti
+;                    xxxxxxxx   CaptureType = store
+
+
+[SEND_Waveform | ; Serial SEND Waveform setup]
+; Serial SEND MEMORY waveform setup (8 bits)
+.pingroup sendPins| = { PinList:  SDA }
+.wavetype sendType = { Type:  Send, Mode: SerialMSB, Length: 100, Width: 8, PinGroup: sendPins}  ; Length = cycles per site.
+.wavedata sendData = { WaveType: sendType}
+; lwseg sendData    X X  T = TSET8 sendType = starti
+; nop               0 W  T = TSET6 sendType = send  (MSB)
+; nop               0 W  T = TSET6 sendType = shift

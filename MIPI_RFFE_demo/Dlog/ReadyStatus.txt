@@ -1,0 +1,8 @@
+----------------------------- Tester Status -----------------------------
+
+Chassis A    (AXI)     AXI_5_1
+     Slot 1   CIF                           Instument Ready
+     Slot 2   DPS12                         Instument Out of Calibration
+     Slot 5   DD48                          Instument Ready
+     Slot 5   DD48                          Instument Ready
+

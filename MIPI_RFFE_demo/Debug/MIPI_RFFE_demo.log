@@ -1,0 +1,9 @@
+﻿  stdafx.cpp
+  MLog.cpp
+c:\atev\mipi_rffe_demo\mlog.cpp(2035): warning C4018: '>': signed/unsigned mismatch
+  AXIeSys.cpp
+  MIPI_RFFE_demo.cpp
+  Generating Code...
+MIPI_RFFE_demo.obj : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/SAFESEH' specification
+     Creating library .\MIPI_RFFE_demo.lib and object .\MIPI_RFFE_demo.exp
+  MIPI_RFFE_demo.vcxproj -> C:\ATEV\MIPI_RFFE_demo\.\MIPI_RFFE_demo.dll
