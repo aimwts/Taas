@@ -12,7 +12,7 @@
 
 # The following instruction is for Mac PC only.
 
-1. Go to Website: http://trytaas.com (TAAS is a global Test Expert professional network. With Test Exoerts we aim to connect them professionally which allows users to take part in collaboration, testing at scale, utilize test methodologies Test Engineers have knowledge of, we just happen to enable this in the cloud.)
+1. Go to Website: http://trytaas.com (TAAS is a global Test Expert professional network. With Test Experts we aim to connect them professionally which allows users to take part in collaboration, testing at scale, utilize test methodologies Test Engineers have knowledge of, we just happen to enable this in the cloud.)
 2. Follow instructions at above website. Your Mac PC will run Windows 7 in virtual machine environment.
 3. Now, you can follow instructions from Windows 7 PC.
 
