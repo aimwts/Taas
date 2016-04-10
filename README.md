@@ -17,4 +17,4 @@
 2. Follow instructions at above website. Your Mac PC will run Windows 7 in virtual machine environment.
 3. Now, you can follow instructions from Windows 7 PC.
 
-There is a test program example directory: MIPI_RFFE_demo for your reference. Duble click MIPI_RFFE_demo.sln to lauch program.
+There is a test program example directory: MIPI_RFFE_demo1 (current TestStand version) for your reference. Duble click MIPI_RFFE_demo.sln to lauch program. (Note: MIPI_REFE_demo directory is for newer TestStand 2012 version)
