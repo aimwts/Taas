@@ -1,0 +1,94 @@
+[header1S | 1 Site(s)]
+1 Site(s)
+MVP                            Pin Name                      Chassis  Slot Channel  Site Pattern#  Instrument Type
+
+DPSCh1_AVSS|                    DPSCh1_AVSS                       1     14      1      1     C3     VI
+
+
+[header2S | 2 Site(s)]
+2 Site(s)
+MVP                            Pin Name                      Chassis  Slot Channel  Site Pattern#  Instrument Type
+
+DPSCh1_AVSS|                    DPSCh1_AVSS                       1     14      1      1     C3     VI
+DPSCh1_AVSS                    DPSCh1_AVSS                       1      1      1      2     C3     VI
+
+[instr_AB | AnalogBus]
+AnalogBus|
+
+[instr_C | CBit]
+CBIT|
+
+[instr_D | Digital]
+Digital|
+
+[instr_DMM | DMM]
+DMM|
+
+[instr_Dtz | Digitizer]
+Digitizer|
+
+[instr_PMU | PMU]
+PMU|
+
+[instr_RF | RF]
+RF|
+
+[instr_T | Trigger]
+Trigger|
+
+[instr_TL | TriggerLine]
+TriggerLine|
+
+[instr_VI | VI]
+VI|
+
+[Group | Example]
+ALL_DIGITAL|                    VDDD
+ALL_DIGITAL                    SPI_CLK
+ALL_DIGITAL                    MOSI
+ALL_DIGITAL                    MISO
+ALL_DIGITAL                    CE_B
+
+
+[header4S | 4 Site(s)]
+4 Site(s)
+MVP                            Pin Name                      Chassis  Slot Channel  Site Pattern#  Instrument Type
+
+VI_01|                          VI_01                             1     14      1      1     C1     VI
+VI_01                          VI_01                             1     14      2      2     C1     VI
+VI_01                          VI_01                             1     14      3      3     C1     VI
+VI_01                          VI_01                             1     14      4      4     C1     VI
+VI_02                          VI_02                             1     14      5      1     C2     VI
+VI_02                          VI_02                             1     14      6      2     C2     VI
+VI_02                          VI_02                             1     14      7      3     C2     VI
+VI_02                          VI_02                             1     14      8      4     C2     VI
+VI_03                          VI_03                             1     14      9      1     D1     VI
+VI_03                          VI_03                             1     14     10      2     D1     VI
+VI_03                          VI_03                             1     14     11      3     D1     VI
+VI_03                          VI_03                             1     14     12      4     D1     VI
+CH1                            CH1                               1      3      1      1     A1     Digital
+CH1                            CH1                               1      6     23      2     A1     Digital
+CH1                            CH1                               1      4      1      3     A1     Digital
+CH1                            CH1                               1      5      1      4     A1     Digital
+CH2                            CH2                               1      3      2      1     A2     Digital
+CH2                            CH2                               1      6     24      2     A2     Digital
+CH2                            CH2                               1      4      2      3     A2     Digital
+CH2                            CH2                               1      5      2      4     A2     Digital
+CH3                            CH3                               1      3      3      1     B1     Digital
+CH3                            CH3                               1      6     47      2     B1     Digital
+CH3                            CH3                               1      4      3      3     B1     Digital
+CH3                            CH3                               1      5      3      4     B1     Digital
+CH4                            CH4                               1      3      4      1     B2     Digital
+CH4                            CH4                               1      6     48      2     B2     Digital
+CH4                            CH4                               1      4      4      3     B2     Digital
+CH4                            CH4                               1      5      4      4     B2     Digital
+DSTARA                         DSTARA                            1      6      1      1     -1     Trigger
+DSTARB                         DSTARB                            1      8      1      2     -1     Trigger
+PFI0                           PFI0                              1      7      1      1     -1     Trigger
+VI_GP                          VI_01
+VI_GP                          VI_02
+VI_GP                          VI_03
+DP_GP                          CH1
+DP_GP                          CH2
+DP_GP                          CH3
+DP_GP                          CH4

@@ -1,0 +1,64 @@
+4 Site(s) V0002  AppTemplate  MIPI SPI I2C some shared pins.
+MVP                            Pin Name                      Chassis  Slot Channel  Site Pattern#  Instrument Type
+
+DPS_1                          DPS_1                             A      2      1      1      1     VI
+DPS_1                          DPS_1                             A      2      3      2      1     VI
+DPS_1                          DPS_1                             A      2      5      3      1     VI
+DPS_1                          DPS_1                             A      2      7      4      1     VI
+DPS_2                          DPS_2                             A      2      2      1      1     VI
+DPS_2                          DPS_2                             A      2      4      2      1     VI
+DPS_2                          DPS_2                             A      2      6      3      1     VI
+DPS_2                          DPS_2                             A      2      8      4      1     VI
+SCLK                           SCLK                              A      5      1      1      1     Digital
+SCLK                           SCLK                              A      5      9      2      1     Digital
+SCLK                           SCLK                              A      5     17      3      1     Digital
+SCLK                           SCLK                              A      5     25      4      1     Digital
+SDATA                          SDATA                             A      5      2      1      1     Digital
+SDATA                          SDATA                             A      5     10      2      1     Digital
+SDATA                          SDATA                             A      5     18      3      1     Digital
+SDATA                          SDATA                             A      5     26      4      1     Digital
+SCLK_A                         SCLK_A                            A      5      3      1      1     Digital
+SCLK_A                         SCLK_A                            A      5     11      2      1     Digital
+SCLK_A                         SCLK_A                            A      5     19      3      1     Digital
+SCLK_A                         SCLK_A                            A      5     27      4      1     Digital
+SDATA_A                        SDATA_A                           A      5      4      1      1     Digital
+SDATA_A                        SDATA_A                           A      5     12      2      1     Digital
+SDATA_A                        SDATA_A                           A      5     20      3      1     Digital
+SDATA_A                        SDATA_A                           A      5     28      4      1     Digital
+VIO                            VIO                               A      5      8      1      1     Digital
+VIO                            VIO                               A      5     16      1      1     Digital
+VIO                            VIO                               A      5     24      1      1     Digital
+VIO                            VIO                               A      5     32      1      1     Digital
+CBIT_1                         CBIT_1                            A      1      1      1      1     CBit
+CBIT_1                         CBIT_1                            A      1      1      2      1     CBit
+CBIT_1                         CBIT_1                            A      1      1      3      1     CBit
+CBIT_1                         CBIT_1                            A      1      1      4      1     CBit
+CBIT_2                         CBIT_2                            A      1      2      1      1     CBit
+CBIT_2                         CBIT_2                            A      1      2      2      1     CBit
+CBIT_2                         CBIT_2                            A      1      2      3      1     CBit
+CBIT_2                         CBIT_2                            A      1      2      4      1     CBit
+S2_DStar_A                     S2_DStar_A                        A      2      1      1     -1     Trigger
+S2_DStar_B                     S2_DStar_B                        A      2      2      1     -1     Trigger
+S2_DStar_C                     S2_DStar_C                        A      2      3      1     -1     Trigger
+S2_DStar_D                     S2_DStar_D                        A      2      4      1     -1     Trigger
+S5_DStar_A                     S5_DStar_A                        A      5      1      1     -1     Trigger
+S5_DStar_B                     S5_DStar_B                        A      5      2      1     -1     Trigger
+S5_DStar_C                     S5_DStar_C                        A      5      3      1     -1     Trigger
+ALL_DPS                        DPS_1
+ALL_DPS                        DPS_2
+ALL_DD48                       SCLK
+ALL_DD48                       SDATA
+ALL_DD48                       SCLK_A
+ALL_DD48                       SDATA_A
+ALL_DD48                       VIO
+patternPins                    SCLK
+patternPins                    SDATA
+patternPins                    SCLK_A
+patternPins                    SDATA_A
+ALL_CBIT                       CBIT_1
+ALL_CBIT                       CBIT_2
+MIPI_PINS                      SCLK
+MIPI_PINS                      SDATA
+MIPI_PINS                      SCLK_A
+MIPI_PINS                      SDATA_A
+MIPI_PINS                      VIO

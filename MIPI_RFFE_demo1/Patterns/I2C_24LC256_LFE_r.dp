@@ -1,0 +1,173 @@
+.target DDP = { Warn:Normal, Mode:Single } 
+
+
+.levelset Levels6 = { Vih:3.3, Vol:1.4, Voh:1.5, Vcl:-1.90, Vch:4.5, Vc:3.0, Iol:0.002, Ioh:0.00001 } 
+
+
+
+
+.edgeset SCL = { DF1:RT, DF1_D0:0ns, DF1_D1:0ns, DF1_D2:1500ns, DF1_D3:1000ns, CF1_R0:0ns, CF1_R1:0ns, CF1_R2:0ns, CF1_R3:0ns } 
+.edgeset SCL_START = { DF1:NRZ, DF1_D0:1500ns, DF1_D1:1500ns, DF1_D2:1000ns, DF1_D3:1000ns, CF1_R0:0ns, CF1_R1:0ns, CF1_R2:0ns, CF1_R3:0ns } 
+.edgeset SCL_STOP = { DF1:RT, DF1_D0:0ns, DF1_D1:0ns, DF1_D2:1500ns, DF1_D3:1000ns, CF1_R0:0ns, CF1_R1:0ns, CF1_R2:0ns, CF1_R3:0ns } 
+.edgeset SDA = { DF1:NRZ, DF1_D0:300ns, DF1_D1:301ns, DF1_D2:0ns, DF1_D3:0ns, CF1:Strobe, CF1_R0:0ns, CF1_R1:0ns, CF1_R2:0ns, CF1_R3:1000ns } 
+.edgeset SDA_ACK = { DF1:RT, DF1_D0:300ns, DF1_D1:301ns, DF1_D2:300ns, DF1_D3:0ns, CF1:Strobe, CF1_R0:0ns, CF1_R1:0ns, CF1_R2:0ns, CF1_R3:600ns } 
+.edgeset SDA_START = { DF1:NRZ, DF1_D0:800ns, DF1_D1:800ns, DF1_D2:2000ns, DF1_D3:2000ns, CF1:Strobe, CF1_R0:0ns, CF1_R1:0ns, CF1_R2:0ns, CF1_R3:10ns } 
+.edgeset SDA_STOP = { DF1:RT, DF1_D0:0ns, DF1_D1:0ns, DF1_D2:2200ns, DF1_D3:2200ns, CF1:Strobe, CF1_R0:0ns, CF1_R1:0ns, CF1_R2:0ns, CF1_R3:10ns } 
+
+
+.pset PSET6 = { T0:2500ns } 
+
+
+.tset TSET6 = { PSet:PSET6 } 
+.tset TSET7 = { PSet:PSET6 } 
+.tset TSET8 = { PSet:PSET6 } 
+.tset TSET9 = { PSet:PSET6 } 
+
+.pin DEF_PIN = { ClockEdges:enabled, ClockReference:T0, FailMask:disabled, ComparatorMode:Normal, DriverMode:DrvSense, MarkerMode:Quad, RelayMode:Idle, StaticDrive:Z, StaticLoad:Z, DataMode:Dynamic, ScanType:None, LevelSet:Levels6, PMUSet:DEF_PMUSET, DEF_TSET:DEF_EDGESET, TSET6:SDA, TSET7:DEF_EDGESET, TSET8:DEF_EDGESET, TSET9:DEF_EDGESET } 
+.pin VCC = {  } 
+.pin WPb = {  } 
+.pin SCL = { TSET6:SCL, TSET7:SCL_START, TSET8:SCL_STOP, TSET9:SCL } 
+.pin SDA = { TSET7:SDA_START, TSET8:SDA_STOP, TSET9:SDA_ACK } 
+
+
+.pingroup I2CPins = { PinList:SCL SDA WPb } 
+.pingroup sendPins = { PinList:SDA } 
+.pingroup CapturePins = { PinList:SDA } 
+
+
+.wavetype sendType = { Mode:SerialMSB, Length:100, Width:8, PinGroup:sendPins } 
+.wavetype CaptureType = { Type:Receive, Mode:SerialMSB, Length:100, Width:8, PinGroup:CapturePins } 
+
+
+.wavedata sendData = { WaveType:sendType } 
+.wavedata CaptureData = { WaveType:CaptureType } 
+
+.extern ReadSeqSRL
+.extern WritePageSL
+.extern LblLcnt1
+.extern LblLcnt2
+
+.pattern testI2C_LFE
+                    SCL SDA 
+
+;@ base(0) numVectors(107) type(SVM)
+
+WritePageSL: 
+	nop                 X	X	 T=TSET8 TRIGGER = { TRIGA }
+	lwseg sendData      X	X	 T=TSET8 sendType=starti
+	rep 27              X	X	 T=TSET8 
+	nop                 X	X	 T=TSET8 
+	nop                 0	0	 T=TSET7 
+	nop                 0	1	 T=TSET6 
+	nop                 0	0	 T=TSET6 
+	nop                 0	1	 T=TSET6 
+	nop                 0	0	 T=TSET6 
+	nop                 0	0	 T=TSET6 
+	nop                 0	0	 T=TSET6 
+	nop                 0	0	 T=TSET6 
+	nop                 0	0	 T=TSET6 
+	nop                 0	L	 T=TSET9 
+	nop                 0	W	 T=TSET6 sendType=send
+	nop                 0	W	 T=TSET6 sendType=shift
+	nop                 0	W	 T=TSET6 sendType=shift
+	nop                 0	W	 T=TSET6 sendType=shift
+	nop                 0	W	 T=TSET6 sendType=shift
+	nop                 0	W	 T=TSET6 sendType=shift
+	nop                 0	W	 T=TSET6 sendType=shift
+	nop                 0	W	 T=TSET6 sendType=shift
+	nop                 0	L	 T=TSET9 
+	nop                 0	W	 T=TSET6 sendType=send
+	nop                 0	W	 T=TSET6 sendType=shift
+	nop                 0	W	 T=TSET6 sendType=shift
+	nop                 0	W	 T=TSET6 sendType=shift
+	nop                 0	W	 T=TSET6 sendType=shift
+	nop                 0	W	 T=TSET6 sendType=shift
+	nop                 0	W	 T=TSET6 sendType=shift
+	nop                 0	W	 T=TSET6 sendType=shift
+
+LblLcnt1: 
+	lcnt 64             0	L	 T=TSET9 
+
+lp1: 
+	nop                 0	W	 T=TSET6 sendType=send
+	nop                 0	W	 T=TSET6 sendType=shift
+	nop                 0	W	 T=TSET6 sendType=shift
+	nop                 0	W	 T=TSET6 sendType=shift
+	nop                 0	W	 T=TSET6 sendType=shift
+	nop                 0	W	 T=TSET6 sendType=shift
+	nop                 0	W	 T=TSET6 sendType=shift
+	nop                 0	W	 T=TSET6 sendType=shift
+	endl lp1            0	L	 T=TSET9 
+	nop                 0	0	 T=TSET8 
+	nop                 X	X	 T=TSET8 
+	halt                X	X	 T=TSET8 
+
+ReadSeqSRL: 
+	nop                 X	X	 T=TSET8 
+	lwseg sendData      X	X	 T=TSET8 sendType=starti
+	lwseg CaptureData   X	X	 T=TSET8 CaptureType=starti
+	rep 27              X	X	 T=TSET8 
+	nop                 X	X	 T=TSET8 TRIGGER = { TRIGA }
+	nop                 0	0	 T=TSET7 
+	nop                 0	1	 T=TSET6 
+	nop                 0	0	 T=TSET6 
+	nop                 0	1	 T=TSET6 
+	nop                 0	0	 T=TSET6 
+	nop                 0	0	 T=TSET6 
+	nop                 0	0	 T=TSET6 
+	nop                 0	0	 T=TSET6 
+	nop                 0	0	 T=TSET6 
+	nop                 0	L	 T=TSET9 
+	nop                 0	W	 T=TSET6 sendType=send
+	nop                 0	W	 T=TSET6 sendType=shift
+	nop                 0	W	 T=TSET6 sendType=shift
+	nop                 0	W	 T=TSET6 sendType=shift
+	nop                 0	W	 T=TSET6 sendType=shift
+	nop                 0	W	 T=TSET6 sendType=shift
+	nop                 0	W	 T=TSET6 sendType=shift
+	nop                 0	W	 T=TSET6 sendType=shift
+	nop                 0	L	 T=TSET9 
+	nop                 0	W	 T=TSET6 sendType=send
+	nop                 0	W	 T=TSET6 sendType=shift
+	nop                 0	W	 T=TSET6 sendType=shift
+	nop                 0	W	 T=TSET6 sendType=shift
+	nop                 0	W	 T=TSET6 sendType=shift
+	nop                 0	W	 T=TSET6 sendType=shift
+	nop                 0	W	 T=TSET6 sendType=shift
+	nop                 0	W	 T=TSET6 sendType=shift
+	nop                 0	L	 T=TSET9 
+	nop                 0	1	 T=TSET6 
+	nop                 0	0	 T=TSET7 
+	nop                 0	1	 T=TSET6 
+	nop                 0	0	 T=TSET6 
+	nop                 0	1	 T=TSET6 
+	nop                 0	0	 T=TSET6 
+	nop                 0	0	 T=TSET6 
+	nop                 0	0	 T=TSET6 
+	nop                 0	0	 T=TSET6 
+	nop                 0	1	 T=TSET6 
+
+LblLcnt2: 
+	lcnt 63             0	L	 T=TSET9 
+
+lp2: 
+	nop                 0	V	 T=TSET6 CaptureType=shift
+	nop                 0	V	 T=TSET6 CaptureType=shift
+	nop                 0	V	 T=TSET6 CaptureType=shift
+	nop                 0	V	 T=TSET6 CaptureType=shift
+	nop                 0	V	 T=TSET6 CaptureType=shift
+	nop                 0	V	 T=TSET6 CaptureType=shift
+	nop                 0	V	 T=TSET6 CaptureType=shift
+	nop                 0	V	 T=TSET6 CaptureType=shiftst
+	endl lp2            0	0	 T=TSET6 
+	nop                 0	V	 T=TSET6 CaptureType=shift
+	nop                 0	V	 T=TSET6 CaptureType=shift
+	nop                 0	V	 T=TSET6 CaptureType=shift
+	nop                 0	V	 T=TSET6 CaptureType=shift
+	nop                 0	V	 T=TSET6 CaptureType=shift
+	nop                 0	V	 T=TSET6 CaptureType=shift
+	nop                 0	V	 T=TSET6 CaptureType=shift
+	nop                 0	V	 T=TSET6 CaptureType=shiftst
+	nop                 0	V	 T=TSET9 
+	halt                0	0	 T=TSET8 
+

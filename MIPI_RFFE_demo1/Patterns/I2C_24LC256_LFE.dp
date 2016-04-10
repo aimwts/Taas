@@ -1,0 +1,178 @@
+;/*******************************************************************************************
+;/  I2C_24LC256_LFE.dp
+;/  Rev Eng	Date		Description
+;/   1	JC	01/07/14	Initial Issue for 24LC256 EEPROM
+;********************************************************************************************
+; 24LC256 EEPROM (I2C)  (http://ww1.microchip.com/downloads/en/DeviceDoc/21203M.pdf)
+;
+;         8-pin   8-pin   8-pin   14-pin  8-pin   8-pin
+; Name    PDIP    SOIC    TSSOP   TSSOP   MSOP    DFN     Function
+;  A0     1       1       1       1       —       1       User Configurable Chip Select
+;  A1     2       2       2       2       —       2       User Configurable Chip Select
+; (NC)    —       —       —       3,4,5   1,2     —       Not Connected
+;  A2     3       3       3       6       3       3       User Configurable Chip Select
+;  VSS    4       4       4       7       4       4       Ground
+;  SDA    5       5       5       8       5       5       Serial Data
+;  SCL    6       6       6       9       6       6       Serial Clock
+; (NC)    —       —       —       10,11,12 —      —       Not Connected
+;  WP     7       7       7       13      7       7       Write-Protect Input
+;  VCC    8       8       8       14      8       8       +1.8V to 5.5V (24AA256)
+;                                                         +2.5V to 5.5V (24LC256)
+;                                                         +1.8V to 5.5V (24FC256)
+
+;VOL    Low-level output voltage    —   0.40 V      IOL = 3.0 ma @ VCC = 4.5V
+;                                                   IOL = 2.1 ma @ VCC = 2.5V
+
+;ICC Read  Operating current        —   400 uA      VCC = 5.5V, SCL = 400 kHz
+;ICC Write Operating current        —   3   mA      VCC = 5.5V
+;********************************************************************************************
+.target DDP = { Mode:Single }
+
+.extern ReadSeqSRL      ; Read from EEPROM using RECEIVE waveform and loop counter
+.extern WritePageSL     ; Write to EEPROM using SEND waveform and loop counter
+.extern LblLcnt1        ;   Loop counter can be modified with an API.
+.extern LblLcnt2
+
+#include "./CommonHeader_I2C.h"
+
+; Define the pattern name here. Pattern name must be unique from all other loaded patterns.
+; Note pattern filename is *not* the pattern name.
+.pattern testI2C_LFE
+			SCL SDA
+
+; 6 sets of SEND & RECEIVE engines with 8 pins each per DD48.
+;/--------------------- 2 pins per site for patterns. ---------------------------------------------
+;
+;
+;
+;                   S S
+;                   C D
+; op-codes          L A  TimeSet Extended op-codes
+;/--------------------------------------------------------------------------------------------------
+
+; Write to EEPROM using SEND waveform
+ WritePageSL:
+; nop               0 0  T = TSET8 TRIGGER={TRIGA} ;STOP
+  nop               X X  T = TSET8 TRIGGER={TRIGA}
+  lwseg sendData    X X  T = TSET8 sendType = starti
+  rep 27            X X  T = TSET8 ;Wait for Waveform Engines to initialize
+  nop               X X  T = TSET8
+  nop               0 0  T = TSET7 ;START condition
+  nop               0 1  T = TSET6 ;C7 Device type (MSB)
+  nop               0 0  T = TSET6 ;C6 Device type
+  nop               0 1  T = TSET6 ;C5 Device type
+  nop               0 0  T = TSET6 ;C4 Device type
+  nop               0 0  T = TSET6 ;C3 [A2]
+  nop               0 0  T = TSET6 ;C2 [A1]
+  nop               0 0  T = TSET6 ;C1 [A0]
+  nop               0 0  T = TSET6 ;C0 R/Wb  Read:1 Write:0
+  nop               0 L  T = TSET9 ;ACKnowlege
+; Starting Address High Byte
+  nop               0 W  T = TSET6 sendType = send  ;A15 MSB (don't care range = 0x0000 - 0x7FFF)
+  nop               0 W  T = TSET6 sendType = shift ;A14
+  nop               0 W  T = TSET6 sendType = shift ;A13
+  nop               0 W  T = TSET6 sendType = shift ;A12
+  nop               0 W  T = TSET6 sendType = shift ;A11
+  nop               0 W  T = TSET6 sendType = shift ;A10
+  nop               0 W  T = TSET6 sendType = shift ;A9
+  nop               0 W  T = TSET6 sendType = shift ;A8
+  nop               0 L  T = TSET9 ;ACKnowlege
+; Starting Address Low Byte
+  nop               0 W  T = TSET6 sendType = send  ;A7
+  nop               0 W  T = TSET6 sendType = shift ;A6
+  nop               0 W  T = TSET6 sendType = shift ;A5
+  nop               0 W  T = TSET6 sendType = shift ;A4
+  nop               0 W  T = TSET6 sendType = shift ;A3
+  nop               0 W  T = TSET6 sendType = shift ;A2
+  nop               0 W  T = TSET6 sendType = shift ;A1
+  nop               0 W  T = TSET6 sendType = shift ;A0
+  LblLcnt1: lcnt 64 0 L  T = TSET9 ;ACKnowlege
+; Byte 0
+  lp1:              0 W  T = TSET6 sendType = send  ;D7 MSB
+  nop               0 W  T = TSET6 sendType = shift ;D6
+  nop               0 W  T = TSET6 sendType = shift ;D5
+  nop               0 W  T = TSET6 sendType = shift ;D4
+  nop               0 W  T = TSET6 sendType = shift ;D3
+  nop               0 W  T = TSET6 sendType = shift ;D2
+  nop               0 W  T = TSET6 sendType = shift ;D1
+  nop               0 W  T = TSET6 sendType = shift ;D0 LSB
+  endl lp1          0 L  T = TSET9 ;ACKnowlege
+; STOP
+  nop               0 0  T = TSET8 ;STOP condition
+  nop               X X  T = TSET8
+  halt              X X  T = TSET8
+
+
+
+ReadSeqSRL:
+  nop               X X  T = TSET8
+  lwseg sendData    X X  T = TSET8 sendType    = starti
+  lwseg CaptureData X X  T = TSET8 CaptureType = starti
+  rep 27            X X  T = TSET8 ;Wait for Waveform Engines to initialize
+; nop               0 0  T = TSET8 TRIGGER={TRIGA} ;STOP
+  nop               X X  T = TSET8 TRIGGER={TRIGA}
+; Random READ sequence
+  nop               0 0  T = TSET7 ;START condition
+; Control byte (Write bit)
+  nop               0 1  T = TSET6 ;C7 Device type (MSB)
+  nop               0 0  T = TSET6 ;C6 Device type
+  nop               0 1  T = TSET6 ;C5 Device type
+  nop               0 0  T = TSET6 ;C4 Device type
+  nop               0 0  T = TSET6 ;C3 [A2]
+  nop               0 0  T = TSET6 ;C2 [A1]
+  nop               0 0  T = TSET6 ;C1 [A0]
+  nop               0 0  T = TSET6 ;C0 R/Wb  Read:1 Write:0
+  nop               0 L  T = TSET9 ;ACKnowlege
+; Starting Address High Byte
+  nop               0 W  T = TSET6 sendType = send  ;A15 MSB (don't care range = 0x0000 - 0x7FFF)
+  nop               0 W  T = TSET6 sendType = shift ;A14
+  nop               0 W  T = TSET6 sendType = shift ;A13
+  nop               0 W  T = TSET6 sendType = shift ;A12
+  nop               0 W  T = TSET6 sendType = shift ;A11
+  nop               0 W  T = TSET6 sendType = shift ;A10
+  nop               0 W  T = TSET6 sendType = shift ;A9
+  nop               0 W  T = TSET6 sendType = shift ;A8
+  nop               0 L  T = TSET9 ;ACKnowlege
+; Starting Address Low Byte
+  nop               0 W  T = TSET6 sendType = send  ;A7
+  nop               0 W  T = TSET6 sendType = shift ;A6
+  nop               0 W  T = TSET6 sendType = shift ;A5
+  nop               0 W  T = TSET6 sendType = shift ;A4
+  nop               0 W  T = TSET6 sendType = shift ;A3
+  nop               0 W  T = TSET6 sendType = shift ;A2
+  nop               0 W  T = TSET6 sendType = shift ;A1
+  nop               0 W  T = TSET6 sendType = shift ;A0
+  nop               0 L  T = TSET9 ;ACKnowlege
+; Control byte (Read bit)
+  nop               0 1  T = TSET6 ;Setup for Re-START
+  nop               0 0  T = TSET7 ;START condition
+  nop               0 1  T = TSET6 ;C7 Device type (MSB)
+  nop               0 0  T = TSET6 ;C6 Device type
+  nop               0 1  T = TSET6 ;C5 Device type
+  nop               0 0  T = TSET6 ;C4 Device type
+  nop               0 0  T = TSET6 ;C3 [A2]
+  nop               0 0  T = TSET6 ;C2 [A1]
+  nop               0 0  T = TSET6 ;C1 [A0]
+  nop               0 1  T = TSET6 ;C0 R/Wb  Read:1 Write:0
+  LblLcnt2: lcnt 63 0 L  T = TSET9 ;ACKnowlege
+; byte 0 to n-1
+  lp2:              0 V  T = TSET6 CaptureType = shift; D7
+  nop               0 V  T = TSET6 CaptureType = shift; D6
+  nop               0 V  T = TSET6 CaptureType = shift; D5
+  nop               0 V  T = TSET6 CaptureType = shift; D4
+  nop               0 V  T = TSET6 CaptureType = shift; D3
+  nop               0 V  T = TSET6 CaptureType = shift; D2
+  nop               0 V  T = TSET6 CaptureType = shift; D1
+  nop               0 V  T = TSET6 CaptureType = shiftst; D0  ; Store 8 bit word
+  endl lp2          0 0  T = TSET6 ;ACKnowlege by MASTER
+; byte n
+  nop               0 V  T = TSET6 CaptureType = shift; D7
+  nop               0 V  T = TSET6 CaptureType = shift; D6
+  nop               0 V  T = TSET6 CaptureType = shift; D5
+  nop               0 V  T = TSET6 CaptureType = shift; D4
+  nop               0 V  T = TSET6 CaptureType = shift; D3
+  nop               0 V  T = TSET6 CaptureType = shift; D2
+  nop               0 V  T = TSET6 CaptureType = shift; D1
+  nop               0 V  T = TSET6 CaptureType = shiftst; D0  ; Store 8 bit word
+  nop               0 V  T = TSET9 ;No ACKnowlege by MASTER
+  halt              0 0  T = TSET8 ;STOP condition

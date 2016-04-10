@@ -1,0 +1,686 @@
+;/*******************************************************************************************
+;/  SPI_25LC256.dp
+;/  Rev Eng	Date		Description
+;/   1	JC	01/07/14	Initial Issue for 25LC256 EEPROM
+;********************************************************************************************
+; 25LC256 EEPROM (SPI)  (http://ww1.microchip.com/downloads/en/DeviceDoc/21822E.pdf)
+; Reg
+; Name    Value         Description
+; READ    0000 0011     Read data from memory array beginning at selected address
+; WRITE   0000 0010     Write data to memory array beginning at selected address
+; WRDI    0000 0100     Reset the write enable latch (disable write operations)
+; WREN    0000 0110     Set the write enable latch (enable write operations)
+; RDSR    0000 0101     Read STATUS register
+; WRSR    0000 0001     Write STATUS register
+
+; Pin   Name  Function
+;  1    CS    Chip Select Input
+;  2    SO    Serial Data Output
+;  3    WP    Write-Protect
+;  4    VSS   Ground
+;  5    SI    Serial Data Input
+;  6    SCK   Serial Clock Input
+;  7    HOLD  Hold Input
+;  8    VCC   Supply Voltage
+;********************************************************************************************
+.target DDP = { Mode:Single }
+
+.extern ReadStatus      ; Read STATUS register using RECEIVE waveform.
+.extern WriteEnable     ; Set the write enable latch (enable write operations)
+.extern ReadMemR        ; Read from EEPROM using RECEIVE waveform hard coded address.
+.extern ReadMemSR       ; Read from EEPROM using RECEIVE waveform
+.extern ReadMemSRL      ; Read from EEPROM using RECEIVE waveform and loop counter
+.extern WriteMem        ; Hard coded write to EEPROM
+.extern WriteMemS       ; Write to EEPROM using SEND waveform
+.extern WriteMemSL      ; Write to EEPROM using SEND waveform and loop counter
+.extern LblLcnt1        ;   Loop counter can be modified with an API.
+.extern LblLcnt2
+
+.extern ReadMemR2       ; Read from EEPROM using RECEIVE waveform hard coded address.
+.extern WriteMem2       ; Hard coded write to EEPROM
+
+#include "./CommonHeader_SPI.h"
+
+; Define the pattern name here. Pattern name must be unique from all other loaded patterns.
+; Note pattern filename is *not* the pattern name.
+.pattern testSPI
+			CSb SCK MOSI MISO
+
+; 6 sets of SEND & RECEIVE engines with 8 pins each per DD48.
+;/--------------------- 4 pins per site for patterns. ---------------------------------------------
+;
+;
+;                       M M
+;                   C S O I
+;                   S C S S
+; op-codes          b K I O   TimeSet Extended op-codes
+;/--------------------------------------------------------------------------------------------------
+
+ReadStatus:
+  nop               1 0 0 X   T = TSET4 ;
+  lwseg CaptureData 1 0 0 X   T = TSET4 CaptureType = starti
+  rep 27            1 0 0 X   T = TSET4 ; wait for engines to initialize
+  nop               1 0 0 X   T = TSET4 ;CS active
+; READ STATUS register 0x05.  MOSI data clocked in on rising edge of SCLK
+  nop               0 1 0 X   T = TSET4 ;C7 MSB
+  nop               0 1 0 X   T = TSET4 ;C6
+  nop               0 1 0 X   T = TSET4 ;C5
+  nop               0 1 0 X   T = TSET4 ;C4
+  nop               0 1 0 X   T = TSET4 ;C3
+  nop               0 1 1 X   T = TSET4 ;C2
+  nop               0 1 0 X   T = TSET4 ;C1
+  nop               0 1 1 X   T = TSET4 ;C0 LSB
+; Data output on MISO (100nS after clock low)
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D7
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D6
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D5
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D4
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D3
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D2
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D1
+  nop               0 1 X V   T = TSET4 CaptureType = shiftst; D0  ; Store 8 bit word
+  halt              1 0 0 X   T = TSET4 ;CS deactivated
+
+; Hard coded Write to EEPROM
+WriteEnable:
+  nop               1 0 0 X   T = TSET4 ;CS active
+; WRITE Enable Instruction 0x06.  MOSI data clocked in on rising edge of SCLK
+  nop               0 1 0 X   T = TSET4 ;C7 MSB
+  nop               0 1 0 X   T = TSET4 ;C6
+  nop               0 1 0 X   T = TSET4 ;C5
+  nop               0 1 0 X   T = TSET4 ;C4
+  nop               0 1 0 X   T = TSET4 ;C3
+  nop               0 1 1 X   T = TSET4 ;C2
+  nop               0 1 1 X   T = TSET4 ;C1
+  nop               0 1 0 X   T = TSET4 ;C0 LSB
+; Latch in Write Enable Instruction
+  halt              1 0 0 X   T = TSET4 ;CS active
+
+ReadMemR:
+  nop               1 0 0 X   T = TSET4 ;CS active
+  lwseg CaptureData 1 0 0 X   T = TSET4 CaptureType = starti
+  rep 27            1 0 0 X   T = TSET4 ; wait for engines to initialize
+; READ Memory Instruction 0x03.  MOSI data clocked in on rising edge of SCLK
+  nop               0 1 0 X   T = TSET4 ;C7 MSB
+  nop               0 1 0 X   T = TSET4 ;C6
+  nop               0 1 0 X   T = TSET4 ;C5
+  nop               0 1 0 X   T = TSET4 ;C4
+  nop               0 1 0 X   T = TSET4 ;C3
+  nop               0 1 0 X   T = TSET4 ;C2
+  nop               0 1 1 X   T = TSET4 ;C1
+  nop               0 1 1 X   T = TSET4 ;C0 LSB
+; Starting Address (0x0000 - 0x7FFF)
+  nop               0 1 0 X   T = TSET4 ;A15 MSB (don't care, 0x7FFF addresses)
+  nop               0 1 0 X   T = TSET4 ;A14
+  nop               0 1 0 X   T = TSET4 ;A13
+  nop               0 1 0 X   T = TSET4 ;A12
+  nop               0 1 0 X   T = TSET4 ;A11
+  nop               0 1 0 X   T = TSET4 ;A10
+  nop               0 1 0 X   T = TSET4 ;A9
+  nop               0 1 0 X   T = TSET4 ;A8
+  nop               0 1 0 X   T = TSET4 ;A7
+  nop               0 1 0 X   T = TSET4 ;A6
+  nop               0 1 0 X   T = TSET4 ;A5
+  nop               0 1 0 X   T = TSET4 ;A4
+  nop               0 1 0 X   T = TSET4 ;A3
+  nop               0 1 0 X   T = TSET4 ;A2
+  nop               0 1 0 X   T = TSET4 ;A1
+  nop               0 1 0 X   T = TSET4 ;A0
+; Data output on MISO (100nS after clock low)
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D7
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D6
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D5
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D4
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D3
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D2
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D1
+  nop               0 1 X V   T = TSET4 CaptureType = shiftst; D0  ; Store 8 bit word
+  halt              1 0 X X   T = TSET4 ;CS deactivated
+
+
+
+; Hard coded Write to EEPROM
+WriteMem2:
+  nop               1 0 0 X   T = TSET4 ;CS active
+  nop               1 0 0 X   T = TSET4 ;CS active
+  nop               1 0 0 X   T = TSET4 ;CS active
+  nop               1 0 0 X   T = TSET4 ;CS active
+; WRITE Enable Instruction 0x06.  MOSI data clocked in on rising edge of SCLK
+  nop               0 1 0 X   T = TSET4 ;C7 MSB
+  nop               0 1 0 X   T = TSET4 ;C6
+  nop               0 1 0 X   T = TSET4 ;C5
+  nop               0 1 0 X   T = TSET4 ;C4
+  nop               0 1 0 X   T = TSET4 ;C3
+  nop               0 1 1 X   T = TSET4 ;C2
+  nop               0 1 1 X   T = TSET4 ;C1
+  nop               0 1 0 X   T = TSET4 ;C0 LSB
+; Latch in Write Enable Instruction
+  nop               1 0 0 X   T = TSET4 ;CS active
+  nop               1 0 0 X   T = TSET4 ;CS active
+  nop               1 0 0 X   T = TSET4 ;CS active
+; WRITE Memory Instruction 0x02.  MOSI data clocked in on rising edge of SCLK
+  nop               0 1 0 X   T = TSET4 ;C7 MSB
+  nop               0 1 0 X   T = TSET4 ;C6
+  nop               0 1 0 X   T = TSET4 ;C5
+  nop               0 1 0 X   T = TSET4 ;C4
+  nop               0 1 0 X   T = TSET4 ;C3
+  nop               0 1 0 X   T = TSET4 ;C2
+  nop               0 1 1 X   T = TSET4 ;C1
+  nop               0 1 0 X   T = TSET4 ;C0 LSB
+; Starting Address (0x0000 - 0x7FFF)
+  nop               0 1 0 X   T = TSET4 ;A15 MSB (don't care, 0x7FFF addresses)
+  nop               0 1 0 X   T = TSET4 ;A14
+  nop               0 1 0 X   T = TSET4 ;A13
+  nop               0 1 0 X   T = TSET4 ;A12
+  nop               0 1 0 X   T = TSET4 ;A11
+  nop               0 1 0 X   T = TSET4 ;A10
+  nop               0 1 0 X   T = TSET4 ;A9
+  nop               0 1 0 X   T = TSET4 ;A8
+  nop               0 1 0 X   T = TSET4 ;A7
+  nop               0 1 0 X   T = TSET4 ;A6
+  nop               0 1 0 X   T = TSET4 ;A5
+  nop               0 1 0 X   T = TSET4 ;A4
+  nop               0 1 0 X   T = TSET4 ;A3
+  nop               0 1 0 X   T = TSET4 ;A2
+  nop               0 1 0 X   T = TSET4 ;A1
+  nop               0 1 0 X   T = TSET4 ;A0
+; Data input on MOSI (20nS before(setup) and 40nS after(hold) clock high)
+; Upto 64 bytes can be written at a time.
+; byte 0  0xAA
+  nop               0 1 1 X   T = TSET4 ;D7 MSB
+  nop               0 1 0 X   T = TSET4 ;D6
+  nop               0 1 1 X   T = TSET4 ;D5
+  nop               0 1 0 X   T = TSET4 ;D4
+  nop               0 1 1 X   T = TSET4 ;D3
+  nop               0 1 0 X   T = TSET4 ;D2
+  nop               0 1 1 X   T = TSET4 ;D1
+  nop               0 1 0 X   T = TSET4 ;D0 LSB
+; byte 1  0x55
+  nop               0 1 0 X   T = TSET4 ;D7 MSB
+  nop               0 1 1 X   T = TSET4 ;D6
+  nop               0 1 0 X   T = TSET4 ;D5
+  nop               0 1 1 X   T = TSET4 ;D4
+  nop               0 1 0 X   T = TSET4 ;D3
+  nop               0 1 1 X   T = TSET4 ;D2
+  nop               0 1 0 X   T = TSET4 ;D1
+  nop               0 1 1 X   T = TSET4 ;D0 LSB
+  halt              1 0 0 X   T = TSET4 ;CS
+
+ReadMemR2:
+  nop               1 0 0 X   T = TSET4 ;CS active
+  lwseg CaptureData 1 0 0 X   T = TSET4 CaptureType = starti
+  rep 27            1 0 0 X   T = TSET4 ; wait for engines to initialize
+; READ Memory Instruction 0x03.  MOSI data clocked in on rising edge of SCLK
+  nop               0 1 0 X   T = TSET4 ;C7 MSB
+  nop               0 1 0 X   T = TSET4 ;C6
+  nop               0 1 0 X   T = TSET4 ;C5
+  nop               0 1 0 X   T = TSET4 ;C4
+  nop               0 1 0 X   T = TSET4 ;C3
+  nop               0 1 0 X   T = TSET4 ;C2
+  nop               0 1 1 X   T = TSET4 ;C1
+  nop               0 1 1 X   T = TSET4 ;C0 LSB
+; Starting Address (0x0000 - 0x7FFF)
+  nop               0 1 0 X   T = TSET4 ;A15 MSB (don't care, 0x7FFF addresses)
+  nop               0 1 0 X   T = TSET4 ;A14
+  nop               0 1 0 X   T = TSET4 ;A13
+  nop               0 1 0 X   T = TSET4 ;A12
+  nop               0 1 0 X   T = TSET4 ;A11
+  nop               0 1 0 X   T = TSET4 ;A10
+  nop               0 1 0 X   T = TSET4 ;A9
+  nop               0 1 0 X   T = TSET4 ;A8
+  nop               0 1 0 X   T = TSET4 ;A7
+  nop               0 1 0 X   T = TSET4 ;A6
+  nop               0 1 0 X   T = TSET4 ;A5
+  nop               0 1 0 X   T = TSET4 ;A4
+  nop               0 1 0 X   T = TSET4 ;A3
+  nop               0 1 0 X   T = TSET4 ;A2
+  nop               0 1 0 X   T = TSET4 ;A1
+  nop               0 1 0 X   T = TSET4 ;A0
+; Data output on MISO (100nS after clock low)
+; byte 0
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D7
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D6
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D5
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D4
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D3
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D2
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D1
+  nop               0 1 X V   T = TSET4 CaptureType = shiftst; D0  ; Store 8 bit word
+; byte 1
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D7
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D6
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D5
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D4
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D3
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D2
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D1
+  nop               0 1 X V   T = TSET4 CaptureType = shiftst; D0  ; Store 8 bit word
+  halt              1 0 X X   T = TSET4 ;CS deactivated
+
+
+
+ReadMemSR:
+  nop               1 0 0 X   T = TSET4 ;CS active
+  lwseg sendData    1 0 0 X   T = TSET4 sendType    = starti;
+  lwseg CaptureData 1 0 0 X   T = TSET4 CaptureType = starti
+  rep 27            1 0 0 X   T = TSET4 ; wait for engines to initialize
+; READ Memory Instruction 0x03.  MOSI data clocked in on rising edge of SCLK
+  nop               0 1 0 X   T = TSET4 ;C7 MSB
+  nop               0 1 0 X   T = TSET4 ;C6
+  nop               0 1 0 X   T = TSET4 ;C5
+  nop               0 1 0 X   T = TSET4 ;C4
+  nop               0 1 0 X   T = TSET4 ;C3
+  nop               0 1 0 X   T = TSET4 ;C2
+  nop               0 1 1 X   T = TSET4 ;C1
+  nop               0 1 1 X   T = TSET4 ;C0 LSB
+; Starting Address (0x0000 - 0x7FFF)
+  nop               0 1 W X   T = TSET4 sendType = send  ;A15 MSB (don't care, 0x7FFF addresses)
+  nop               0 1 W X   T = TSET4 sendType = shift ;A14
+  nop               0 1 W X   T = TSET4 sendType = shift ;A13
+  nop               0 1 W X   T = TSET4 sendType = shift ;A12
+  nop               0 1 W X   T = TSET4 sendType = shift ;A11
+  nop               0 1 W X   T = TSET4 sendType = shift ;A10
+  nop               0 1 W X   T = TSET4 sendType = shift ;A9
+  nop               0 1 W X   T = TSET4 sendType = shift ;A8
+  nop               0 1 W X   T = TSET4 sendType = send  ;A7
+  nop               0 1 W X   T = TSET4 sendType = shift ;A6
+  nop               0 1 W X   T = TSET4 sendType = shift ;A5
+  nop               0 1 W X   T = TSET4 sendType = shift ;A4
+  nop               0 1 W X   T = TSET4 sendType = shift ;A3
+  nop               0 1 W X   T = TSET4 sendType = shift ;A2
+  nop               0 1 W X   T = TSET4 sendType = shift ;A1
+  nop               0 1 W X   T = TSET4 sendType = shift ;A0
+; Data output on MISO (100nS after clock low)
+; byte 0
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D7
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D6
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D5
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D4
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D3
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D2
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D1
+  nop               0 1 X V   T = TSET4 CaptureType = shiftst; D0  ; Store 8 bit word
+; byte 1
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D7
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D6
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D5
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D4
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D3
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D2
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D1
+  nop               0 1 X V   T = TSET4 CaptureType = shiftst; D0  ; Store 8 bit word
+; byte 2
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D7
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D6
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D5
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D4
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D3
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D2
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D1
+  nop               0 1 X V   T = TSET4 CaptureType = shiftst; D0  ; Store 8 bit word
+; byte 3
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D7
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D6
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D5
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D4
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D3
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D2
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D1
+  nop               0 1 X V   T = TSET4 CaptureType = shiftst; D0  ; Store 8 bit word
+; byte 4
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D7
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D6
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D5
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D4
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D3
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D2
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D1
+  nop               0 1 X V   T = TSET4 CaptureType = shiftst; D0  ; Store 8 bit word
+; byte 5
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D7
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D6
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D5
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D4
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D3
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D2
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D1
+  nop               0 1 X V   T = TSET4 CaptureType = shiftst; D0  ; Store 8 bit word
+; byte 6
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D7
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D6
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D5
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D4
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D3
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D2
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D1
+  nop               0 1 X V   T = TSET4 CaptureType = shiftst; D0  ; Store 8 bit word
+  halt              1 0 X X   T = TSET4 ;CS deactivated
+
+
+
+
+
+; Hard coded Write to EEPROM
+WriteMem:
+  nop               1 0 0 X   T = TSET4 ;CS active
+  nop               1 0 0 X   T = TSET4 ;CS active
+  nop               1 0 0 X   T = TSET4 ;CS active
+  nop               1 0 0 X   T = TSET4 ;CS active
+; WRITE Enable Instruction 0x06.  MOSI data clocked in on rising edge of SCLK
+  nop               0 1 0 X   T = TSET4 ;C7 MSB
+  nop               0 1 0 X   T = TSET4 ;C6
+  nop               0 1 0 X   T = TSET4 ;C5
+  nop               0 1 0 X   T = TSET4 ;C4
+  nop               0 1 0 X   T = TSET4 ;C3
+  nop               0 1 1 X   T = TSET4 ;C2
+  nop               0 1 1 X   T = TSET4 ;C1
+  nop               0 1 0 X   T = TSET4 ;C0 LSB
+; Latch in Write Enable Instruction
+  nop               1 0 0 X   T = TSET4 ;CS active
+  nop               1 0 0 X   T = TSET4 ;CS active
+  nop               1 0 0 X   T = TSET4 ;CS active
+; WRITE Memory Instruction 0x02.  MOSI data clocked in on rising edge of SCLK
+  nop               0 1 0 X   T = TSET4 ;C7 MSB
+  nop               0 1 0 X   T = TSET4 ;C6
+  nop               0 1 0 X   T = TSET4 ;C5
+  nop               0 1 0 X   T = TSET4 ;C4
+  nop               0 1 0 X   T = TSET4 ;C3
+  nop               0 1 0 X   T = TSET4 ;C2
+  nop               0 1 1 X   T = TSET4 ;C1
+  nop               0 1 0 X   T = TSET4 ;C0 LSB
+; Starting Address (0x0000 - 0x7FFF)
+  nop               0 1 0 X   T = TSET4 ;A15 MSB (don't care, 0x7FFF addresses)
+  nop               0 1 0 X   T = TSET4 ;A14
+  nop               0 1 0 X   T = TSET4 ;A13
+  nop               0 1 0 X   T = TSET4 ;A12
+  nop               0 1 0 X   T = TSET4 ;A11
+  nop               0 1 0 X   T = TSET4 ;A10
+  nop               0 1 0 X   T = TSET4 ;A9
+  nop               0 1 0 X   T = TSET4 ;A8
+  nop               0 1 0 X   T = TSET4 ;A7
+  nop               0 1 0 X   T = TSET4 ;A6
+  nop               0 1 0 X   T = TSET4 ;A5
+  nop               0 1 0 X   T = TSET4 ;A4
+  nop               0 1 0 X   T = TSET4 ;A3
+  nop               0 1 0 X   T = TSET4 ;A2
+  nop               0 1 0 X   T = TSET4 ;A1
+  nop               0 1 0 X   T = TSET4 ;A0
+; Data input on MOSI (20nS before(setup) and 40nS after(hold) clock high)
+; Upto 64 bytes can be written at a time.
+; byte 0  0x55
+  nop               0 1 0 X   T = TSET4 ;D7 MSB
+  nop               0 1 1 X   T = TSET4 ;D6
+  nop               0 1 0 X   T = TSET4 ;D5
+  nop               0 1 1 X   T = TSET4 ;D4
+  nop               0 1 0 X   T = TSET4 ;D3
+  nop               0 1 1 X   T = TSET4 ;D2
+  nop               0 1 0 X   T = TSET4 ;D1
+  nop               0 1 1 X   T = TSET4 ;D0 LSB
+; byte 1  0xAA
+  nop               0 1 1 X   T = TSET4 ;D7 MSB
+  nop               0 1 0 X   T = TSET4 ;D6
+  nop               0 1 1 X   T = TSET4 ;D5
+  nop               0 1 0 X   T = TSET4 ;D4
+  nop               0 1 1 X   T = TSET4 ;D3
+  nop               0 1 0 X   T = TSET4 ;D2
+  nop               0 1 1 X   T = TSET4 ;D1
+  nop               0 1 0 X   T = TSET4 ;D0 LSB
+; byte 2  0x02
+  nop               0 1 0 X   T = TSET4 ;D7 MSB
+  nop               0 1 0 X   T = TSET4 ;D6
+  nop               0 1 0 X   T = TSET4 ;D5
+  nop               0 1 0 X   T = TSET4 ;D4
+  nop               0 1 0 X   T = TSET4 ;D3
+  nop               0 1 0 X   T = TSET4 ;D2
+  nop               0 1 1 X   T = TSET4 ;D1
+  nop               0 1 0 X   T = TSET4 ;D0 LSB
+; byte 3
+  nop               0 1 0 X   T = TSET4 ;D7 MSB
+  nop               0 1 0 X   T = TSET4 ;D6
+  nop               0 1 0 X   T = TSET4 ;D5
+  nop               0 1 0 X   T = TSET4 ;D4
+  nop               0 1 0 X   T = TSET4 ;D3
+  nop               0 1 0 X   T = TSET4 ;D2
+  nop               0 1 1 X   T = TSET4 ;D1
+  nop               0 1 1 X   T = TSET4 ;D0 LSB
+; byte 4
+  nop               0 1 0 X   T = TSET4 ;D7 MSB
+  nop               0 1 0 X   T = TSET4 ;D6
+  nop               0 1 0 X   T = TSET4 ;D5
+  nop               0 1 0 X   T = TSET4 ;D4
+  nop               0 1 0 X   T = TSET4 ;D3
+  nop               0 1 1 X   T = TSET4 ;D2
+  nop               0 1 0 X   T = TSET4 ;D1
+  nop               0 1 0 X   T = TSET4 ;D0 LSB
+; byte 5
+  nop               0 1 0 X   T = TSET4 ;D7 MSB
+  nop               0 1 0 X   T = TSET4 ;D6
+  nop               0 1 0 X   T = TSET4 ;D5
+  nop               0 1 0 X   T = TSET4 ;D4
+  nop               0 1 0 X   T = TSET4 ;D3
+  nop               0 1 1 X   T = TSET4 ;D2
+  nop               0 1 0 X   T = TSET4 ;D1
+  nop               0 1 1 X   T = TSET4 ;D0 LSB
+; byte 6
+  nop               0 1 0 X   T = TSET4 ;D7 MSB
+  nop               0 1 0 X   T = TSET4 ;D6
+  nop               0 1 0 X   T = TSET4 ;D5
+  nop               0 1 0 X   T = TSET4 ;D4
+  nop               0 1 0 X   T = TSET4 ;D3
+  nop               0 1 1 X   T = TSET4 ;D2
+  nop               0 1 1 X   T = TSET4 ;D1
+  nop               0 1 0 X   T = TSET4 ;D0 LSB
+  halt              1 0 0 X   T = TSET4 ;CS
+
+; Write to EEPROM using SEND waveform
+WriteMemS:
+  nop               1 0 0 X   T = TSET4 ;CS active
+  lwseg sendData    1 0 0 X   T = TSET4 sendType = starti;
+  rep 27            1 0 0 X   T = TSET4 ; wait for engines to initialize
+; WRITE Enable Instruction 0x06.  MOSI data clocked in on rising edge of SCLK
+  nop               0 1 0 X   T = TSET4 ;C7 MSB
+  nop               0 1 0 X   T = TSET4 ;C6
+  nop               0 1 0 X   T = TSET4 ;C5
+  nop               0 1 0 X   T = TSET4 ;C4
+  nop               0 1 0 X   T = TSET4 ;C3
+  nop               0 1 1 X   T = TSET4 ;C2
+  nop               0 1 1 X   T = TSET4 ;C1
+  nop               0 1 0 X   T = TSET4 ;C0 LSB
+; Latch in Write Enable Instruction
+  nop               1 0 0 X   T = TSET4 ;CS active
+; WRITE Memory Instruction 0x02.  MOSI data clocked in on rising edge of SCLK
+  nop               0 1 0 X   T = TSET4 ;C7 MSB
+  nop               0 1 0 X   T = TSET4 ;C6
+  nop               0 1 0 X   T = TSET4 ;C5
+  nop               0 1 0 X   T = TSET4 ;C4
+  nop               0 1 0 X   T = TSET4 ;C3
+  nop               0 1 0 X   T = TSET4 ;C2
+  nop               0 1 1 X   T = TSET4 ;C1
+  nop               0 1 0 X   T = TSET4 ;C0 LSB
+; Starting Address (0x0000 - 0x7FFF)
+  nop               0 1 W X   T = TSET4 sendType = send  ;A15 MSB (don't care, 0x7FFF addresses)
+  nop               0 1 W X   T = TSET4 sendType = shift ;A14
+  nop               0 1 W X   T = TSET4 sendType = shift ;A13
+  nop               0 1 W X   T = TSET4 sendType = shift ;A12
+  nop               0 1 W X   T = TSET4 sendType = shift ;A11
+  nop               0 1 W X   T = TSET4 sendType = shift ;A10
+  nop               0 1 W X   T = TSET4 sendType = shift ;A9
+  nop               0 1 W X   T = TSET4 sendType = shift ;A8
+  nop               0 1 W X   T = TSET4 sendType = send  ;A7
+  nop               0 1 W X   T = TSET4 sendType = shift ;A6
+  nop               0 1 W X   T = TSET4 sendType = shift ;A5
+  nop               0 1 W X   T = TSET4 sendType = shift ;A4
+  nop               0 1 W X   T = TSET4 sendType = shift ;A3
+  nop               0 1 W X   T = TSET4 sendType = shift ;A2
+  nop               0 1 W X   T = TSET4 sendType = shift ;A1
+  nop               0 1 W X   T = TSET4 sendType = shift ;A0
+; Data input on MOSI (20nS before(setup) and 40nS after(hold) clock high)
+; Upto 64 bytes can be written at a time.
+; byte 0
+  nop               0 1 W X   T = TSET4 sendType = send  ;D7 MSB
+  nop               0 1 W X   T = TSET4 sendType = shift ;D6
+  nop               0 1 W X   T = TSET4 sendType = shift ;D5
+  nop               0 1 W X   T = TSET4 sendType = shift ;D4
+  nop               0 1 W X   T = TSET4 sendType = shift ;D3
+  nop               0 1 W X   T = TSET4 sendType = shift ;D2
+  nop               0 1 W X   T = TSET4 sendType = shift ;D1
+  nop               0 1 W X   T = TSET4 sendType = shift ;D0 LSB
+; byte 1
+  nop               0 1 W X   T = TSET4 sendType = send  ;D7 MSB
+  nop               0 1 W X   T = TSET4 sendType = shift ;D6
+  nop               0 1 W X   T = TSET4 sendType = shift ;D5
+  nop               0 1 W X   T = TSET4 sendType = shift ;D4
+  nop               0 1 W X   T = TSET4 sendType = shift ;D3
+  nop               0 1 W X   T = TSET4 sendType = shift ;D2
+  nop               0 1 W X   T = TSET4 sendType = shift ;D1
+  nop               0 1 W X   T = TSET4 sendType = shift ;D0 LSB
+; byte 2
+  nop               0 1 W X   T = TSET4 sendType = send  ;D7 MSB
+  nop               0 1 W X   T = TSET4 sendType = shift ;D6
+  nop               0 1 W X   T = TSET4 sendType = shift ;D5
+  nop               0 1 W X   T = TSET4 sendType = shift ;D4
+  nop               0 1 W X   T = TSET4 sendType = shift ;D3
+  nop               0 1 W X   T = TSET4 sendType = shift ;D2
+  nop               0 1 W X   T = TSET4 sendType = shift ;D1
+  nop               0 1 W X   T = TSET4 sendType = shift ;D0 LSB
+; byte 3
+  nop               0 1 W X   T = TSET4 sendType = send  ;D7 MSB
+  nop               0 1 W X   T = TSET4 sendType = shift ;D6
+  nop               0 1 W X   T = TSET4 sendType = shift ;D5
+  nop               0 1 W X   T = TSET4 sendType = shift ;D4
+  nop               0 1 W X   T = TSET4 sendType = shift ;D3
+  nop               0 1 W X   T = TSET4 sendType = shift ;D2
+  nop               0 1 W X   T = TSET4 sendType = shift ;D1
+  nop               0 1 W X   T = TSET4 sendType = shift ;D0 LSB
+; byte 4
+  nop               0 1 W X   T = TSET4 sendType = send  ;D7 MSB
+  nop               0 1 W X   T = TSET4 sendType = shift ;D6
+  nop               0 1 W X   T = TSET4 sendType = shift ;D5
+  nop               0 1 W X   T = TSET4 sendType = shift ;D4
+  nop               0 1 W X   T = TSET4 sendType = shift ;D3
+  nop               0 1 W X   T = TSET4 sendType = shift ;D2
+  nop               0 1 W X   T = TSET4 sendType = shift ;D1
+  nop               0 1 W X   T = TSET4 sendType = shift ;D0 LSB
+; byte 5
+  nop               0 1 W X   T = TSET4 sendType = send  ;D7 MSB
+  nop               0 1 W X   T = TSET4 sendType = shift ;D6
+  nop               0 1 W X   T = TSET4 sendType = shift ;D5
+  nop               0 1 W X   T = TSET4 sendType = shift ;D4
+  nop               0 1 W X   T = TSET4 sendType = shift ;D3
+  nop               0 1 W X   T = TSET4 sendType = shift ;D2
+  nop               0 1 W X   T = TSET4 sendType = shift ;D1
+  nop               0 1 W X   T = TSET4 sendType = shift ;D0 LSB
+; byte 6
+  nop               0 1 W X   T = TSET4 sendType = send  ;D7 MSB
+  nop               0 1 W X   T = TSET4 sendType = shift ;D6
+  nop               0 1 W X   T = TSET4 sendType = shift ;D5
+  nop               0 1 W X   T = TSET4 sendType = shift ;D4
+  nop               0 1 W X   T = TSET4 sendType = shift ;D3
+  nop               0 1 W X   T = TSET4 sendType = shift ;D2
+  nop               0 1 W X   T = TSET4 sendType = shift ;D1
+  nop               0 1 W X   T = TSET4 sendType = shift ;D0 LSB
+  halt              1 0 W X   T = TSET4 ;CS
+
+
+
+WriteMemSL:
+  nop               1 0 0 X   T = TSET4 ;CS active
+  lwseg sendData    1 0 0 X   T = TSET4 sendType = starti;
+  rep 27            1 0 0 X   T = TSET4 ; wait for engines to initialize (27)
+  jsr writeEN       1 0 0 X   T = TSET4 ; WRITE Enable Instruction 0x06. (9)
+; WRITE Memory Instruction 0x02.  MOSI data clocked in on rising edge of SCLK
+  nop               0 1 0 X   T = TSET4 ;C7 MSB
+  nop               0 1 0 X   T = TSET4 ;C6
+  nop               0 1 0 X   T = TSET4 ;C5
+  nop               0 1 0 X   T = TSET4 ;C4
+  nop               0 1 0 X   T = TSET4 ;C3
+  nop               0 1 0 X   T = TSET4 ;C2
+  nop               0 1 1 X   T = TSET4 ;C1
+  nop               0 1 0 X   T = TSET4 ;C0 LSB
+; Starting Address (0x0000 - 0x7FFF)
+  nop               0 1 W X   T = TSET4 sendType = send  ;A15 MSB (don't care, 0x7FFF addresses)
+  nop               0 1 W X   T = TSET4 sendType = shift ;A14
+  nop               0 1 W X   T = TSET4 sendType = shift ;A13
+  nop               0 1 W X   T = TSET4 sendType = shift ;A12
+  nop               0 1 W X   T = TSET4 sendType = shift ;A11
+  nop               0 1 W X   T = TSET4 sendType = shift ;A10
+  nop               0 1 W X   T = TSET4 sendType = shift ;A9
+  nop               0 1 W X   T = TSET4 sendType = shift ;A8
+  nop               0 1 W X   T = TSET4 sendType = send  ;A7
+  nop               0 1 W X   T = TSET4 sendType = shift ;A6
+  nop               0 1 W X   T = TSET4 sendType = shift ;A5
+  nop               0 1 W X   T = TSET4 sendType = shift ;A4
+  nop               0 1 W X   T = TSET4 sendType = shift ;A3
+  nop               0 1 W X   T = TSET4 sendType = shift ;A2
+  nop               0 1 W X   T = TSET4 sendType = shift ;A1
+  LblLcnt1: lcnt 64 0 1 W X   T = TSET4 sendType = shift ;A0
+; Data input on MOSI (20nS before(setup) and 40nS after(hold) clock high)
+; Upto 64 bytes can be written at a time.
+; byte 0-63
+  lp1: nop          0 1 W X   T = TSET4 sendType = send  ;D7 MSB
+  nop               0 1 W X   T = TSET4 sendType = shift ;D6
+  nop               0 1 W X   T = TSET4 sendType = shift ;D5
+  nop               0 1 W X   T = TSET4 sendType = shift ;D4
+  nop               0 1 W X   T = TSET4 sendType = shift ;D3
+  nop               0 1 W X   T = TSET4 sendType = shift ;D2
+  nop               0 1 W X   T = TSET4 sendType = shift ;D1
+  endl lp1          0 1 W X   T = TSET4 sendType = shift ;D0 LSB
+  halt              1 0 W X   T = TSET4 ;CS
+
+
+
+ReadMemSRL:
+  nop               1 0 0 X   T = TSET4 ;CS active
+  lwseg sendData    1 0 0 X   T = TSET4 sendType    = starti;
+  lwseg CaptureData 1 0 0 X   T = TSET4 CaptureType = starti
+  rep 27            1 0 0 X   T = TSET4 ; wait for engines to initialize
+; READ Memory Instruction 0x03.  MOSI data clocked in on rising edge of SCLK
+  nop               0 1 0 X   T = TSET4 ;C7 MSB
+  nop               0 1 0 X   T = TSET4 ;C6
+  nop               0 1 0 X   T = TSET4 ;C5
+  nop               0 1 0 X   T = TSET4 ;C4
+  nop               0 1 0 X   T = TSET4 ;C3
+  nop               0 1 0 X   T = TSET4 ;C2
+  nop               0 1 1 X   T = TSET4 ;C1
+  nop               0 1 1 X   T = TSET4 ;C0 LSB
+; Starting Address (0x0000 - 0x7FFF)
+  nop               0 1 W X   T = TSET4 sendType = send  ;A15 MSB (don't care, 0x7FFF addresses)
+  nop               0 1 W X   T = TSET4 sendType = shift ;A14
+  nop               0 1 W X   T = TSET4 sendType = shift ;A13
+  nop               0 1 W X   T = TSET4 sendType = shift ;A12
+  nop               0 1 W X   T = TSET4 sendType = shift ;A11
+  nop               0 1 W X   T = TSET4 sendType = shift ;A10
+  nop               0 1 W X   T = TSET4 sendType = shift ;A9
+  nop               0 1 W X   T = TSET4 sendType = shift ;A8
+  nop               0 1 W X   T = TSET4 sendType = send  ;A7
+  nop               0 1 W X   T = TSET4 sendType = shift ;A6
+  nop               0 1 W X   T = TSET4 sendType = shift ;A5
+  nop               0 1 W X   T = TSET4 sendType = shift ;A4
+  nop               0 1 W X   T = TSET4 sendType = shift ;A3
+  nop               0 1 W X   T = TSET4 sendType = shift ;A2
+  nop               0 1 W X   T = TSET4 sendType = shift ;A1
+  LblLcnt2: lcnt 64 0 1 W X   T = TSET4 sendType = shift ;A0
+; Data output on MISO (100nS after clock low)(Capture on next CLK rising edge)
+  lp2: nop          0 1 X V   T = TSET4 CaptureType = shift; D7
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D6
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D5
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D4
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D3
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D2
+  nop               0 1 X V   T = TSET4 CaptureType = shift; D1
+  endl lp2          0 1 X V   T = TSET4 CaptureType = shiftst; D0  ; Store 8 bit word
+  halt              1 0 0 X   T = TSET4 ;CS deactivated
+
+
+; WRITE Enable Instruction 0x06.  MOSI data clocked in on rising edge of SCLK
+writeEN:
+  nop               0 1 0 X   T = TSET4 ;C7 MSB
+  nop               0 1 0 X   T = TSET4 ;C6
+  nop               0 1 0 X   T = TSET4 ;C5
+  nop               0 1 0 X   T = TSET4 ;C4
+  nop               0 1 0 X   T = TSET4 ;C3
+  nop               0 1 1 X   T = TSET4 ;C2
+  nop               0 1 1 X   T = TSET4 ;C1
+  nop               0 1 0 X   T = TSET4 ;C0 LSB
+; Latch in Write Enable Instruction
+  rtn               1 0 0 X   T = TSET4 ;CS active
