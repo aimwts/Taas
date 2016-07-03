@@ -11,6 +11,8 @@
 4. Go to ConText directory: Run ConTEXTv0_986.exe program (Select English, Run through defaults)
 5. Go to MSVS2010Express_C++Install: 5.1 Run vc_web.exe to install from Web 5.2 Run VS10sp1-KB983509.exe to install service pack
 
+Note: Here is the link to download 7zip: www.7-zip.org/download.html
+
 # The following instruction set is for Mac OS X only.
 
 1. Go to Website: http://trytaas.com (TAAS is a global Test Expert professional network. With Test Experts we aim to connect them professionally which allows users to take part in collaboration, testing at scale, utilize test methodologies Test Engineers have knowledge of, we just happen to enable this in the cloud.)
