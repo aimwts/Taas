@@ -1,4 +1,4 @@
-# Taas Installation and Test Development Version 1.2
+# Taas Installation and Test Development Version 1.3
 
 # The following instruction set is for Windows 7 PC only.
 
@@ -15,7 +15,7 @@ Note: Here is the link to download 7zip: www.7-zip.org/download.html
 
 # The following instruction set is for Mac OS X only.
 
-1. Go to Website: http://trytaas.com (TAAS is a global Test Expert professional network. With Test Experts we aim to connect them professionally which allows users to take part in collaboration, testing at scale, utilize test methodologies Test Engineers have knowledge of, we just happen to enable this in the cloud.)
+1. Go to Website: http://trytaas.com (TAAS is a global Test Expert professional network. With Test Experts we aim to connect them professionally which allows users to take part in collaboration, testing at scale, utilize test methodologies Test Engineers have knowledge of, we just happen to enable this in the cloud. The first Test Program Development utilized AI-Based Smart Test Head.)
 2. Follow instructions at above website. Your Mac PC will run Windows 7 in virtual machine environment.
 3. Now, you can follow instructions from Windows 7 PC.
 
