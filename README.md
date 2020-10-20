@@ -2,6 +2,8 @@
 
 # The following instruction set is for Windows 7 PC only.
 
+# updated: check on 10/20/2020 
+
 1. Go to Gdrive to download 1_2.05624.rar - https://drive.google.com/file/d/0BxhKEPVzQLQ7MzVzYW5aOHFMWEU/view?usp=sharing
  1.1 Run AS Administor: setup.exe; 1.2 Step through defaults; 1.3 Restart System
 2. Go to Gdrive link and download 2_NI Platform Service.rar: https://drive.google.com/file/d/0BxhKEPVzQLQ7Tm1HVGxEOFJUUHM/view?usp=sharing
